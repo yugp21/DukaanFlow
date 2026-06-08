@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -157,4 +158,22 @@ public class InvoiceService {
                 invoice.getCreatedAt()
         );
     }
+
+    public List<InvoiceResponse> getByDateRange(String period) {
+        Long shopId = shopContext.getCurrentShopId();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime from = switch (period) {
+            case "today" -> now.toLocalDate().atStartOfDay();
+            case "week" -> now.minusDays(7);
+            case "month" -> now.minusDays(30);
+            case "year" -> now.minusDays(365);
+            default -> LocalDateTime.of(2000, 1, 1, 0, 0);
+        };
+
+        return invoiceRepository.findByShopIdAndDateRange(shopId, from, now)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
 }

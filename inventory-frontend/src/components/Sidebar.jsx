@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, Package, Users, FileText, LogOut, Store, Tag, List, X, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, Package, Users, FileText, LogOut, Store, Tag, List, TrendingUp, X, Settings } from 'lucide-react'
 
 const PRIMARY = '#1e3a5f'
 const PRIMARY_DARK = '#0f2744'
@@ -13,6 +13,7 @@ const navItems = [
   { path: '/app/invoices', icon: List, label: 'Invoices' },
   { path: '/app/invoices/create', icon: FileText, label: 'Create Invoice' },
   { path: '/app/profit-loss', icon: TrendingUp, label: 'Profit & Loss' },
+  { path: '/app/profile', icon: Settings, label: 'Shop Profile' },
 ]
 
 export default function Sidebar({ onClose }) {

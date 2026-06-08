@@ -13,6 +13,7 @@ import CreateInvoicePage from './pages/CreateInvoicePage'
 import CategoriesPage from './pages/CategoriesPage'
 import InvoicesPage from './pages/InvoicesPage'
 import ProfitLossPage from './pages/ProfitLossPage'
+import ProfilePage from './pages/ProfilePage'
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="invoices" element={<InvoicesPage />} />
             <Route path="invoices/create" element={<CreateInvoicePage />} />
             <Route path="profit-loss" element={<ProfitLossPage />} />
+            <Route path="profile" element={<ProfilePage />} />
           </Route>
 
           <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />

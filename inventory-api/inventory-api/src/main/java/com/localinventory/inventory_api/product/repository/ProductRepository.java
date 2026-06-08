@@ -24,4 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findLowStockByShop(Long shopId);
 
     long countByShopId(Long shopId);
+
+    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.name = :name")
+    Optional<Product> findByShopIdAndName(Long shopId, String name);
 }

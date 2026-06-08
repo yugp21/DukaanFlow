@@ -45,6 +45,11 @@ public class InvoiceController {
                 .body(pdf);
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<InvoiceResponse>> getByDateRange(@RequestParam String period) {
+        return ResponseEntity.ok(invoiceService.getByDateRange(period));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         return ResponseEntity.ok(invoiceService.deleteInvoice(id));
