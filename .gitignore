@@ -1,0 +1,14 @@
+# Frontend
+inventory-frontend/node_modules
+inventory-frontend/dist
+
+# Backend
+inventory-api/target
+
+# IDE files
+.idea
+.vscode
+*.iml
+
+# Environment variables
+.env
