@@ -12,3 +12,5 @@ inventory-api/target
 
 # Environment variables
 .env
+
+application-local.properties
