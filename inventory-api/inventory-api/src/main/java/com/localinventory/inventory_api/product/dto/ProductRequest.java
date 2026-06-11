@@ -8,27 +8,27 @@ import java.math.BigDecimal;
 public class ProductRequest {
 
     @NotBlank(message = "Product name is required")
+    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     private String name;
 
     @NotBlank(message = "SKU is required")
     private String sku;
 
-    @NotNull(message = "Category ID is required")
+    @NotNull(message = "Category is required")
     private Long categoryId;
 
     @NotNull(message = "Purchase price is required")
-    @DecimalMin(value = "0.0", inclusive = false)
+    @Positive(message = "Purchase price must be greater than zero")
     private BigDecimal purchasePrice;
 
     @NotNull(message = "Selling price is required")
-    @DecimalMin(value = "0.0", inclusive = false)
+    @Positive(message = "Selling price must be greater than zero")
     private BigDecimal sellingPrice;
 
     @NotNull(message = "Stock quantity is required")
-    @Min(value = 0)
+    @Min(value = 0, message = "Stock quantity cannot be negative")
     private Integer stockQuantity;
 
-    private Integer lowStockThreshold = 10;
-
+    private Integer lowStockThreshold = 5;
     private String unit;
 }

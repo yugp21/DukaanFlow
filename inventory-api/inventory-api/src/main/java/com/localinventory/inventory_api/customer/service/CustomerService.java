@@ -8,10 +8,11 @@ import com.localinventory.inventory_api.exception.ResourceNotFoundException;
 import com.localinventory.inventory_api.security.ShopContext;
 import com.localinventory.inventory_api.shop.entity.Shop;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,18 +33,11 @@ public class CustomerService {
         return mapToResponse(customerRepository.save(customer));
     }
 
-    public List<CustomerResponse> getAll(String search) {
+    public Page<CustomerResponse> getAll(int page, int size, String search) {
         Long shopId = shopContext.getCurrentShopId();
-        if (search == null || search.isEmpty()) {
-            return customerRepository.findAllByShopId(shopId)
-                    .stream()
-                    .map(this::mapToResponse)
-                    .collect(Collectors.toList());
-        }
-        return customerRepository.searchByShop(shopId, search)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return customerRepository.searchByShop(shopId, search, pageable)
+                .map(this::mapToResponse);
     }
 
     public CustomerResponse getById(Long id) {

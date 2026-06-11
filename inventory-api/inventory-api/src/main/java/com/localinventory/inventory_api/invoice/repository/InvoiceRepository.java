@@ -1,6 +1,8 @@
 package com.localinventory.inventory_api.invoice.repository;
 
 import com.localinventory.inventory_api.invoice.entity.Invoice;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,11 +13,13 @@ import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
-    List<Invoice> findAllByShopIdOrderByCreatedAtDesc(Long shopId);
-
     Optional<Invoice> findByIdAndShopId(Long id, Long shopId);
 
     long countByShopId(Long shopId);
+    boolean existsByInvoiceNumber(String invoiceNumber);
+
+    // Paginated - used in getAll()
+    Page<Invoice> findAllByShopId(Long shopId, Pageable pageable);
 
     @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM Invoice i WHERE i.shop.id = :shopId")
     Double getTotalRevenueByShop(Long shopId);

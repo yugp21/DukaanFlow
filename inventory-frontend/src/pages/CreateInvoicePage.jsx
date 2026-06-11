@@ -3,10 +3,10 @@ import client from '../api/client'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, FileText, Download, CheckCircle, Package } from 'lucide-react'
 import { useWindowSize } from '../hooks/useWindowSize'
-
+ 
 const PRIMARY = '#1e3a5f'
 const PRIMARY_DARK = '#0f2744'
-
+ 
 export default function CreateInvoicePage() {
   const { isMobile } = useWindowSize()
   const [customers, setCustomers] = useState([])
@@ -22,24 +22,24 @@ export default function CreateInvoicePage() {
   const [loading, setLoading] = useState(false)
   const [invoice, setInvoice] = useState(null)
   const [downloading, setDownloading] = useState(false)
-
+ 
   useEffect(() => {
-    client.get('/api/customers').then(r => setCustomers(r.data || []))
+    client.get('/api/customers?page=0&size=100').then(r => setCustomers(r.data?.content || []))
     client.get('/api/products?page=0&size=100').then(r => setProducts(r.data.content || []))
   }, [])
-
+ 
   const getProduct = (id) => products.find(p => p.id === Number(id))
-
+ 
   const subtotal = form.items.reduce((sum, item) => {
     const p = getProduct(item.productId)
     return sum + (p ? p.sellingPrice * item.quantity : 0)
   }, 0)
-
+ 
   const discountAmt = subtotal * (form.discount / 100)
   const afterDiscount = subtotal - discountAmt
   const taxAmt = afterDiscount * (form.taxPercent / 100)
   const total = afterDiscount + taxAmt
-
+ 
   const addItem = () => setForm({ ...form, items: [...form.items, { productId: '', quantity: 1 }] })
   const removeItem = (i) => setForm({ ...form, items: form.items.filter((_, idx) => idx !== i) })
   const updateItem = (i, key, val) => {
@@ -47,7 +47,7 @@ export default function CreateInvoicePage() {
     items[i] = { ...items[i], [key]: val }
     setForm({ ...form, items })
   }
-
+ 
   const handleSubmit = async () => {
     if (!form.customerId) return toast.error('Please select a customer')
     if (form.items.some(i => !i.productId)) return toast.error('Please select all products')
@@ -66,7 +66,7 @@ export default function CreateInvoicePage() {
       toast.error(e.response?.data?.message || 'Failed to create invoice')
     } finally { setLoading(false) }
   }
-
+ 
   const handleDownload = async () => {
     setDownloading(true)
     try {
@@ -81,25 +81,25 @@ export default function CreateInvoicePage() {
     } catch { toast.error('Failed to download PDF') }
     finally { setDownloading(false) }
   }
-
+ 
   const handleNew = () => {
     setInvoice(null)
     setForm({ customerId: '', items: [{ productId: '', quantity: 1 }], discount: 0, taxPercent: 0, paymentMethod: 'CASH', notes: '' })
   }
-
+ 
   const inputStyle = {
     width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0',
     borderRadius: '10px', fontSize: '14px', color: '#0f172a',
     background: '#f8fafc', outline: 'none', boxSizing: 'border-box'
   }
-
+ 
   const cardStyle = {
     background: 'white', borderRadius: '16px',
     border: '1px solid #f1f5f9',
     boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
     marginBottom: '16px', overflow: 'hidden'
   }
-
+ 
   const cardHeader = (icon, title, action) => (
     <div style={{ padding: '14px 20px', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -111,7 +111,7 @@ export default function CreateInvoicePage() {
       {action}
     </div>
   )
-
+ 
   // Success screen
   if (invoice) {
     return (
@@ -125,7 +125,7 @@ export default function CreateInvoicePage() {
           <p style={{ fontSize: isMobile ? '32px' : '40px', fontWeight: 800, color: PRIMARY, margin: '12px 0 24px' }}>
             ₹{Number(invoice.totalAmount).toLocaleString('en-IN')}
           </p>
-
+ 
           <div style={{ background: '#f8fafc', borderRadius: '14px', padding: '16px', marginBottom: '24px', textAlign: 'left' }}>
             {[
               { label: 'Customer', value: invoice.customerName },
@@ -142,7 +142,7 @@ export default function CreateInvoicePage() {
               </div>
             ))}
           </div>
-
+ 
           <div style={{ display: 'flex', gap: '10px' }}>
             <button onClick={handleNew}
               style={{ flex: 1, padding: '12px', border: '1.5px solid #e2e8f0', borderRadius: '12px', fontSize: '14px', fontWeight: 600, color: '#64748b', background: 'white', cursor: 'pointer' }}>
@@ -161,14 +161,14 @@ export default function CreateInvoicePage() {
       </div>
     )
   }
-
+ 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', maxWidth: '760px' }}>
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ fontSize: isMobile ? '20px' : '26px', fontWeight: 700, color: '#0f172a', margin: '0 0 4px' }}>Create Invoice</h1>
         <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Fill in the details to generate an invoice</p>
       </div>
-
+ 
       {/* Invoice Details */}
       <div style={cardStyle}>
         {cardHeader(<FileText size={15} color="#2563eb" />, 'Invoice Details')}
@@ -190,7 +190,7 @@ export default function CreateInvoicePage() {
           </div>
         </div>
       </div>
-
+ 
       {/* Items */}
       <div style={cardStyle}>
         {cardHeader(
@@ -255,7 +255,7 @@ export default function CreateInvoicePage() {
           </div>
         </div>
       </div>
-
+ 
       {/* Pricing & Notes */}
       <div style={cardStyle}>
         {cardHeader(<span style={{ fontSize: '14px', fontWeight: 700, color: '#7c3aed' }}>%</span>, 'Pricing & Notes')}
@@ -287,7 +287,7 @@ export default function CreateInvoicePage() {
           </div>
         </div>
       </div>
-
+ 
       {/* Order Summary */}
       <div style={{ background: `linear-gradient(135deg, ${PRIMARY_DARK}, ${PRIMARY})`, borderRadius: '16px', padding: isMobile ? '20px' : '28px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(96,165,250,0.1)', filter: 'blur(20px)' }} />
@@ -312,7 +312,7 @@ export default function CreateInvoicePage() {
               </span>
             </div>
           </div>
-
+ 
           <button onClick={handleSubmit} disabled={loading}
             style={{ width: '100%', padding: '14px', border: 'none', borderRadius: '12px', background: 'white', color: PRIMARY, fontSize: '15px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
             {loading

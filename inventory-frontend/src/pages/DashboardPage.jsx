@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import client from '../api/client'
-import { Package, Users, FileText, AlertTriangle, TrendingUp, ShoppingCart, ArrowUpRight } from 'lucide-react'
+import { Package, Users, FileText, AlertTriangle, TrendingUp, ShoppingCart } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useAuth } from '../context/AuthContext'
 import { useWindowSize } from '../hooks/useWindowSize'
-
+ 
 function StatCard({ icon: Icon, label, value, iconBg, iconColor }) {
   return (
     <div style={{ background: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
@@ -18,7 +18,7 @@ function StatCard({ icon: Icon, label, value, iconBg, iconColor }) {
     </div>
   )
 }
-
+ 
 export default function DashboardPage() {
   const { user } = useAuth()
   const { isMobile } = useWindowSize()
@@ -27,39 +27,41 @@ export default function DashboardPage() {
   const [lowStock, setLowStock] = useState([])
   const [salesData, setSalesData] = useState([])
   const [loading, setLoading] = useState(true)
-
+ 
   useEffect(() => {
     Promise.all([
       client.get('/api/dashboard/summary'),
-      client.get('/api/invoices'),
+      client.get('/api/invoices?page=0&size=100'),
       client.get('/api/products/low-stock'),
     ]).then(([s, i, l]) => {
       setSummary(s.data)
-      setInvoices(i.data || [])
+      // invoices now returns Page object — extract content array
+      const invoiceList = i.data?.content || []
+      setInvoices(invoiceList)
       setLowStock(l.data || [])
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
       setSalesData(months.map((month, idx) => ({
         month,
-        sales: (i.data || []).filter(inv => new Date(inv.createdAt).getMonth() === idx)
+        sales: invoiceList.filter(inv => new Date(inv.createdAt).getMonth() === idx)
           .reduce((sum, inv) => sum + (inv.totalAmount || 0), 0)
       })))
     }).finally(() => setLoading(false))
   }, [])
-
+ 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
       <div style={{ width: '40px', height: '40px', border: '4px solid #e2e8f0', borderTopColor: '#1e3a5f', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
-
+ 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif' }}>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: isMobile ? '22px' : '26px', fontWeight: 700, color: '#0f172a', margin: '0 0 4px' }}>Dashboard</h1>
         <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>Welcome back, <strong>{user?.name}</strong>!</p>
       </div>
-
+ 
       {/* Stat Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
         <StatCard icon={Package} label="Total Products" value={summary.totalProducts} iconBg="#eff6ff" iconColor="#2563eb" />
@@ -67,7 +69,7 @@ export default function DashboardPage() {
         <StatCard icon={FileText} label="Invoices" value={summary.totalInvoices} iconBg="#f0fdf4" iconColor="#16a34a" />
         <StatCard icon={AlertTriangle} label="Low Stock" value={summary.lowStockCount} iconBg="#fef2f2" iconColor="#dc2626" />
       </div>
-
+ 
       {/* Revenue + Chart */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr', gap: '16px', marginBottom: '20px' }}>
         <div style={{ background: 'linear-gradient(135deg, #0f2744, #1e3a5f)', borderRadius: '16px', padding: '24px', position: 'relative', overflow: 'hidden' }}>
@@ -86,7 +88,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-
+ 
         <div style={{ background: 'white', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
           <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#0f172a', margin: '0 0 4px' }}>Sales Overview</h3>
           <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 16px' }}>Monthly — {new Date().getFullYear()}</p>
@@ -108,7 +110,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-
+ 
       {/* Low Stock */}
       {lowStock.length > 0 && (
         <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', overflow: 'hidden', marginBottom: '20px' }}>
@@ -142,7 +144,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
+ 
       {/* Recent Invoices */}
       <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

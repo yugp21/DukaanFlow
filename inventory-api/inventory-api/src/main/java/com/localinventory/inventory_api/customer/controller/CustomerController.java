@@ -5,10 +5,9 @@ import com.localinventory.inventory_api.customer.dto.CustomerResponse;
 import com.localinventory.inventory_api.customer.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -23,9 +22,11 @@ public class CustomerController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CustomerResponse>> getAll(
+    public ResponseEntity<Page<CustomerResponse>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "") String search) {
-        return ResponseEntity.ok(customerService.getAll(search));
+        return ResponseEntity.ok(customerService.getAll(page, size, search));
     }
 
     @GetMapping("/{id}")

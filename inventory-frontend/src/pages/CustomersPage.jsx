@@ -3,7 +3,7 @@ import client from '../api/client'
 import toast from 'react-hot-toast'
 import { Plus, Search, Pencil, Trash2, Users } from 'lucide-react'
 import { useWindowSize } from '../hooks/useWindowSize'
-
+ 
 function ConfirmDialog({ onConfirm, onCancel }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)', padding: '16px' }}>
@@ -21,7 +21,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
     </div>
   )
 }
-
+ 
 function Modal({ title, onClose, children }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)' }}>
@@ -35,9 +35,9 @@ function Modal({ title, onClose, children }) {
     </div>
   )
 }
-
+ 
 const empty = { name: '', phone: '', email: '', address: '' }
-
+ 
 export default function CustomersPage() {
   const { isMobile } = useWindowSize()
   const [customers, setCustomers] = useState([])
@@ -48,24 +48,25 @@ export default function CustomersPage() {
   const [form, setForm] = useState(empty)
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
-
+ 
   const fetchCustomers = async () => {
     try {
-      const res = await client.get('/api/customers')
-      setCustomers(res.data || [])
+      const res = await client.get('/api/customers?page=0&size=100')
+      // API now returns Page object — extract content array
+      setCustomers(res.data?.content || [])
     } catch { toast.error('Failed to load customers') }
     finally { setLoading(false) }
   }
-
+ 
   useEffect(() => { fetchCustomers() }, [])
-
+ 
   const openAdd = () => { setEditing(null); setForm(empty); setShowModal(true) }
   const openEdit = (c) => {
     setEditing(c)
     setForm({ name: c.name, phone: c.phone || '', email: c.email || '', address: c.address || '' })
     setShowModal(true)
   }
-
+ 
   const handleSave = async () => {
     if (!form.name.trim()) return toast.error('Customer name is required')
     if (form.phone && !/^[6-9]\d{9}$/.test(form.phone)) return toast.error('Invalid mobile number')
@@ -84,7 +85,7 @@ export default function CustomersPage() {
       toast.error(e.response?.data?.message || 'Something went wrong')
     } finally { setSaving(false) }
   }
-
+ 
   const handleDelete = (id) => setConfirmDelete(id)
   const confirmDeleteAction = async () => {
     try {
@@ -92,19 +93,17 @@ export default function CustomersPage() {
       toast.success('Customer deleted!')
       fetchCustomers()
     } catch (e) {
-      const msg = e.response?.data?.message || 'Failed to delete'
-      toast.error(msg)
-    }
-    finally { setConfirmDelete(null) }
+      toast.error(e.response?.data?.message || 'Failed to delete')
+    } finally { setConfirmDelete(null) }
   }
-
+ 
   const filtered = customers.filter(c =>
     c.name?.toLowerCase().includes(search.toLowerCase()) ||
     c.phone?.includes(search)
   )
-
+ 
   const inputStyle = { width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', color: '#0f172a', background: '#f8fafc', outline: 'none', boxSizing: 'border-box' }
-
+ 
   const ActionButtons = ({ c }) => (
     <div style={{ display: 'flex', gap: '6px' }}>
       <button onClick={() => openEdit(c)} style={{ width: '32px', height: '32px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
@@ -119,7 +118,7 @@ export default function CustomersPage() {
       </button>
     </div>
   )
-
+ 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
@@ -131,7 +130,7 @@ export default function CustomersPage() {
           <Plus size={16} /> Add Customer
         </button>
       </div>
-
+ 
       <div style={{ background: 'white', borderRadius: '14px', padding: '12px 16px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
         <div style={{ position: 'relative' }}>
           <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -142,7 +141,7 @@ export default function CustomersPage() {
             onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
         </div>
       </div>
-
+ 
       <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', overflow: 'hidden' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '250px' }}>
@@ -154,7 +153,6 @@ export default function CustomersPage() {
             <p style={{ fontWeight: 500, margin: '0 0 4px' }}>No customers found</p>
           </div>
         ) : isMobile ? (
-          // Mobile card view
           <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filtered.map(c => (
               <div key={c.id} style={{ background: '#f8fafc', borderRadius: '12px', padding: '14px', border: '1px solid #f1f5f9' }}>
@@ -184,7 +182,6 @@ export default function CustomersPage() {
             ))}
           </div>
         ) : (
-          // Desktop table
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
@@ -219,7 +216,7 @@ export default function CustomersPage() {
           </table>
         )}
       </div>
-
+ 
       {showModal && (
         <Modal title={editing ? '✏️ Edit Customer' : '➕ Add Customer'} onClose={() => setShowModal(false)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -247,7 +244,7 @@ export default function CustomersPage() {
           </div>
         </Modal>
       )}
-
+ 
       {confirmDelete && <ConfirmDialog onConfirm={confirmDeleteAction} onCancel={() => setConfirmDelete(null)} />}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}`}</style>
     </div>

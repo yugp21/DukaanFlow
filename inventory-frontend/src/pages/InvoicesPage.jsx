@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import client from '../api/client'
 import toast from 'react-hot-toast'
-import { FileText, Download, Trash2, Search, Eye, Mail } from 'lucide-react'
+import { FileText, Download, Trash2, Search, Eye } from 'lucide-react'
 import { useWindowSize } from '../hooks/useWindowSize'
-
+ 
 function ConfirmDialog({ onConfirm, onCancel }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)', padding: '16px' }}>
@@ -21,7 +21,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
     </div>
   )
 }
-
+ 
 function InvoiceDetailModal({ invoice, onClose, onDownload, downloading }) {
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)' }}>
@@ -85,7 +85,7 @@ function InvoiceDetailModal({ invoice, onClose, onDownload, downloading }) {
     </div>
   )
 }
-
+ 
 const PERIODS = [
   { label: 'All', value: 'all' },
   { label: 'Today', value: 'today' },
@@ -93,7 +93,7 @@ const PERIODS = [
   { label: 'This Month', value: 'month' },
   { label: 'This Year', value: 'year' },
 ]
-
+ 
 export default function InvoicesPage() {
   const { isMobile } = useWindowSize()
   const [invoices, setInvoices] = useState([])
@@ -103,24 +103,26 @@ export default function InvoicesPage() {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [selectedInvoice, setSelectedInvoice] = useState(null)
   const [downloading, setDownloading] = useState(false)
-
+ 
   const fetchInvoices = async (p = 'all') => {
     setLoading(true)
     try {
-      const url = p === 'all' ? '/api/invoices' : `/api/invoices/filter?period=${p}`
-      const res = await client.get(url)
-      setInvoices(res.data || [])
+      if (p === 'all') {
+        const res = await client.get('/api/invoices?page=0&size=100')
+        // API returns Page object — extract content array
+        setInvoices(res.data?.content || [])
+      } else {
+        const res = await client.get(`/api/invoices/filter?period=${p}`)
+        setInvoices(res.data || [])
+      }
     } catch { toast.error('Failed to load invoices') }
     finally { setLoading(false) }
   }
-
+ 
   useEffect(() => { fetchInvoices() }, [])
-
-  const handlePeriod = (p) => {
-    setPeriod(p)
-    fetchInvoices(p)
-  }
-
+ 
+  const handlePeriod = (p) => { setPeriod(p); fetchInvoices(p) }
+ 
   const handleDownload = async (invoice) => {
     setDownloading(true)
     try {
@@ -135,7 +137,7 @@ export default function InvoicesPage() {
     } catch { toast.error('Failed to download') }
     finally { setDownloading(false) }
   }
-
+ 
   const confirmDeleteAction = async () => {
     try {
       await client.delete(`/api/invoices/${confirmDelete}`)
@@ -145,19 +147,17 @@ export default function InvoicesPage() {
       toast.error(e.response?.data?.message || 'Failed to delete')
     } finally { setConfirmDelete(null) }
   }
-
+ 
   const filtered = invoices.filter(inv =>
     inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
     inv.customerName?.toLowerCase().includes(search.toLowerCase())
   )
-
+ 
   const totalRevenue = filtered.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0)
-
   const inputStyle = { width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: '10px', fontSize: '14px', color: '#0f172a', background: '#f8fafc', outline: 'none', boxSizing: 'border-box' }
-
+ 
   return (
     <div style={{ fontFamily: 'Inter, sans-serif' }}>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: isMobile ? '20px' : '26px', fontWeight: 700, color: '#0f172a', margin: '0 0 4px' }}>Invoices</h1>
@@ -168,10 +168,8 @@ export default function InvoicesPage() {
           <p style={{ color: 'white', fontSize: '16px', fontWeight: 700, margin: 0 }}>₹{totalRevenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
         </div>
       </div>
-
-      {/* Filters */}
+ 
       <div style={{ background: 'white', borderRadius: '14px', padding: '14px 16px', marginBottom: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
-        {/* Period filter */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
           {PERIODS.map(p => (
             <button key={p.value} onClick={() => handlePeriod(p.value)}
@@ -180,7 +178,6 @@ export default function InvoicesPage() {
             </button>
           ))}
         </div>
-        {/* Search */}
         <div style={{ position: 'relative' }}>
           <Search size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input type="text" placeholder="Search by invoice number or customer..."
@@ -190,8 +187,7 @@ export default function InvoicesPage() {
             onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
         </div>
       </div>
-
-      {/* Content */}
+ 
       <div style={{ background: 'white', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', overflow: 'hidden' }}>
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '250px' }}>
@@ -201,7 +197,6 @@ export default function InvoicesPage() {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '250px', color: '#94a3b8' }}>
             <FileText size={40} style={{ marginBottom: '10px', opacity: 0.3 }} />
             <p style={{ fontWeight: 500, margin: '0 0 4px' }}>No invoices found</p>
-            <p style={{ fontSize: '13px', margin: 0 }}>Try a different filter or search</p>
           </div>
         ) : isMobile ? (
           <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -219,9 +214,9 @@ export default function InvoicesPage() {
                   <p style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>₹{Number(inv.totalAmount).toLocaleString('en-IN')}</p>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     {[
-                      { icon: Eye, action: () => setSelectedInvoice(inv), hoverBg: '#eff6ff', hoverColor: '#2563eb' },
-                      { icon: Download, action: () => handleDownload(inv), hoverBg: '#f0fdf4', hoverColor: '#16a34a' },
-                      { icon: Trash2, action: () => setConfirmDelete(inv.id), hoverBg: '#fef2f2', hoverColor: '#dc2626' },
+                      { icon: Eye, action: () => setSelectedInvoice(inv) },
+                      { icon: Download, action: () => handleDownload(inv) },
+                      { icon: Trash2, action: () => setConfirmDelete(inv.id) },
                     ].map(({ icon: Icon, action }, idx) => (
                       <button key={idx} onClick={action}
                         style={{ width: '32px', height: '32px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
@@ -259,20 +254,17 @@ export default function InvoicesPage() {
                   </td>
                   <td style={{ padding: '14px 20px' }}>
                     <div style={{ display: 'flex', gap: '6px' }}>
-                      <button onClick={() => setSelectedInvoice(inv)}
-                        style={{ width: '32px', height: '32px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
+                      <button onClick={() => setSelectedInvoice(inv)} style={{ width: '32px', height: '32px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#eff6ff'; e.currentTarget.style.color = '#2563eb' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#64748b' }}>
                         <Eye size={14} />
                       </button>
-                      <button onClick={() => handleDownload(inv)}
-                        style={{ width: '32px', height: '32px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
+                      <button onClick={() => handleDownload(inv)} style={{ width: '32px', height: '32px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#f0fdf4'; e.currentTarget.style.color = '#16a34a' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#64748b' }}>
                         <Download size={14} />
                       </button>
-                      <button onClick={() => setConfirmDelete(inv.id)}
-                        style={{ width: '32px', height: '32px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
+                      <button onClick={() => setConfirmDelete(inv.id)} style={{ width: '32px', height: '32px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
                         onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.color = '#dc2626' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = '#64748b' }}>
                         <Trash2 size={14} />
@@ -285,7 +277,7 @@ export default function InvoicesPage() {
           </table>
         )}
       </div>
-
+ 
       {selectedInvoice && <InvoiceDetailModal invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} onDownload={handleDownload} downloading={downloading} />}
       {confirmDelete && <ConfirmDialog onConfirm={confirmDeleteAction} onCancel={() => setConfirmDelete(null)} />}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}`}</style>
